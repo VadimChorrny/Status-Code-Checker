@@ -1,0 +1,20 @@
+{
+  "name": "status-code-checker",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "dev": "nodemon app.js"
+  },
+  "author": "Vadym Chornyi",
+  "license": "ISC",
+  "dependencies": {
+    "csv-parse": "^5.3.3",
+    "is-url-http": "^2.3.2",
+    "link-check": "^5.2.0",
+    "nodemon": "^2.0.20",
+    "request": "^2.88.2",
+    "write": "^2.0.0"
+  }
+}
