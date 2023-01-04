@@ -1,18 +1,18 @@
 import request from "request";
 import fs from "fs";
-import { tickets } from "./tickets.js";
+import async from "async";
+import { tickets } from "./tickets.js"; // array of company names
 
 var data = [];
 
 var out = fs.createWriteStream("tickets.txt", { flags: "a" });
 
-for (let i = 0; i < tickets.length; i++) {
-  request(
-    `https://numfin.com/uk/${tickets[i]}/overview`,
-    function (error, response, body) {
+async function checkUrl(url) {
+  return new Promise((resolve, reject) => {
+    request(url, function (error, response, body) {
       if (error) {
         console.log("Err: " + error);
-        return false;
+        resolve(false);
       }
 
       if (
@@ -20,38 +20,42 @@ for (let i = 0; i < tickets.length; i++) {
         response.statusCode == 201 ||
         response.statusCode == 202
       ) {
-        console.log(
-          `https://numfin.com/uk/${tickets[i]}/overview` + " is alive!!"
-        );
-
-        return false;
+        console.log(`${url} is alive!!`);
+        resolve(false);
       }
 
       if (response.statusCode == 301 || response.statusCode == 302) {
-        console.log(
-          `https://numfin.com/uk/${tickets[i]}/overview` +
-            " is redirecting us!!"
-        );
-        return false;
+        console.log(`${url} is redirecting us!!`);
+        resolve(false);
       }
 
       if (response.statusCode == 401) {
-        console.log(
-          "you are unauthorized to " +
-            `https://numfin.com/uk/${tickets[i]}/overview`
-        );
-        return false;
+        console.log(`You are unauthorized to ${url}`);
+        resolve(false);
       } else {
-        // IF TICKET === 500 status code, I will write this ticket to file
-        console.log(
-          `https://numfin.com/uk/${tickets[i]}/overview` + " is dead!!"
-        );
-        data.push(tickets[i]);
-        console.log("data length", data.length);
-        out.write(tickets[i].toString());
+        console.log(`${url} is dead!!`);
+        resolve(true);
       }
-    }
-  );
+    });
+  });
 }
 
-out.end();
+async function main() {
+  const requests = tickets.map((ticket) => {
+    const url = `https://numfin.com/uk/${ticket}/overview`;
+    return checkUrl(url);
+  });
+
+  const results = await Promise.all(requests);
+
+  for (let i = 0; i < results.length; i++) {
+    if (results[i]) {
+      data.push(tickets[i]);
+      out.write(tickets[i].toString());
+    }
+  }
+
+  out.end();
+}
+
+main();
